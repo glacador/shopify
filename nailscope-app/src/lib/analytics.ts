@@ -1,167 +1,156 @@
-// Analytics helpers for GA4 and Meta Pixel
-// Uses Meta-compliant pattern codes (P1-P13) instead of condition codes
+// Analytics with Meta-compliant tracking
 
 declare global {
   interface Window {
-    dataLayer: any[];
-    gtag: (...args: any[]) => void;
-    fbq: (...args: any[]) => void;
+    dataLayer: any[]
+    gtag: (...args: any[]) => void
+    fbq: (...args: any[]) => void
   }
 }
 
-// GA4 initialization
-export function initGA4(measurementId: string) {
-  if (typeof window === "undefined") return;
+export const CONDITION_TO_PATTERN: Record<string, string> = {
+  FTD: 'P1', NPS: 'P2', CSD: 'P3', AGN: 'P4', TNF: 'P5', BSP: 'P6',
+  OLY: 'P7', PRN: 'P8', ITN: 'P9', RDL: 'P10', PRF: 'P11', YSN: 'P12', GNS: 'P13',
+  // Lowercase versions
+  ftd: 'P1', nps: 'P2', csd: 'P3', agn: 'P4', tnf: 'P5', bsp: 'P6',
+  oly: 'P7', prn: 'P8', itn: 'P9', rdl: 'P10', prf: 'P11', ysn: 'P12', gns: 'P13',
+}
 
-  window.dataLayer = window.dataLayer || [];
-  function gtag(...args: any[]) {
-    window.dataLayer.push(args);
+export const URGENCY_TO_ENGAGEMENT: Record<string, string> = {
+  H: 'ENG_H', MH: 'ENG_MH', M: 'ENG_M', L: 'ENG_L',
+}
+
+export function initGA4(measurementId?: string) {
+  if (typeof window === 'undefined' || !measurementId) return
+  window.dataLayer = window.dataLayer || []
+  function gtag(...args: any[]) { window.dataLayer.push(args) }
+  window.gtag = gtag
+  gtag('js', new Date())
+  gtag('config', measurementId)
+}
+
+export function initMetaPixel(pixelId?: string) {
+  if (typeof window === 'undefined' || !pixelId) return
+  const fbq: any = function(...args: any[]) {
+    fbq.callMethod ? fbq.callMethod.apply(fbq, args) : fbq.queue.push(args)
   }
-  window.gtag = gtag;
-
-  gtag("js", new Date());
-  gtag("config", measurementId);
+  fbq.push = fbq
+  fbq.loaded = true
+  fbq.version = '2.0'
+  fbq.queue = []
+  window.fbq = fbq
+  fbq('init', pixelId)
 }
 
-// Meta Pixel initialization
-export function initMetaPixel(pixelId: string) {
-  if (typeof window === "undefined") return;
-
-  const fbq: any = function (...args: any[]) {
-    fbq.callMethod ? fbq.callMethod.apply(fbq, args) : fbq.queue.push(args);
-  };
-  fbq.push = fbq;
-  fbq.loaded = true;
-  fbq.version = "2.0";
-  fbq.queue = [];
-  window.fbq = fbq;
-
-  fbq("init", pixelId);
-  fbq("track", "PageView");
-}
-
-// Quiz events - Meta-compliant version
-// Uses pattern codes (P1, P2, etc.) instead of condition codes (FTD, NPS, etc.)
 export function trackQuizStarted() {
-  if (typeof window === "undefined") return;
-
-  window.dataLayer?.push({ event: "quiz_started" });
-  window.fbq?.("trackCustom", "QuizStarted");
+  if (typeof window === 'undefined') return
+  window.dataLayer?.push({ event: 'quiz_started' })
+  window.fbq?.('trackCustom', 'QuizStarted')
 }
 
 export function trackQuizProgress(questionNumber: number, totalQuestions: number) {
-  if (typeof window === "undefined") return;
-
-  const progress = Math.round((questionNumber / totalQuestions) * 100);
+  if (typeof window === 'undefined') return
+  const progress = Math.round((questionNumber / totalQuestions) * 100)
   window.dataLayer?.push({
-    event: "quiz_progress",
+    event: 'quiz_progress',
     question_number: questionNumber,
     progress_percent: progress,
-  });
+  })
 }
 
-export interface QuizCompletedPayload {
-  pattern_code: string; // P1, P2, etc. - Meta-compliant
-  engagement_level: "high" | "medium" | "low";
-  quiz_score: number;
-}
+export function trackQuizCompleted(data: {
+  conditionCode: string
+  urgencyBand?: string
+  urgencyScore?: number
+}) {
+  if (typeof window === 'undefined') return
 
-export function trackQuizCompleted(externalPayload: QuizCompletedPayload) {
-  if (typeof window === "undefined") return;
+  // Meta-compliant external payload
+  const patternCode = CONDITION_TO_PATTERN[data.conditionCode] || 'P0'
+  const engagementLevel = data.urgencyBand ? (URGENCY_TO_ENGAGEMENT[data.urgencyBand] || 'ENG_M') : 'ENG_M'
+  const quizScore = data.urgencyScore ? Math.round(((data.urgencyScore - 45) / 55) * 10) : 5
 
-  // DataLayer gets compliant data only
   window.dataLayer?.push({
-    event: "quiz_completed",
-    ...externalPayload,
-  });
+    event: 'quiz_completed',
+    pattern_code: patternCode,
+    engagement_level: engagementLevel,
+    quiz_score: quizScore,
+  })
 
-  // Meta Lead event with compliant data
-  window.fbq?.("track", "Lead", {
-    content_category: "quiz",
-    content_name: externalPayload.pattern_code, // P1, not FTD
-    value: externalPayload.quiz_score,
-    currency: "USD",
-  });
+  window.fbq?.('track', 'Lead', {
+    content_name: patternCode,
+    value: quizScore,
+    currency: 'USD',
+  })
+}
+
+export function trackPageView() {
+  if (typeof window === 'undefined') return
+  window.dataLayer?.push({ event: 'page_view', page_path: window.location.pathname })
+  window.fbq?.('track', 'PageView')
 }
 
 export function trackResultsViewed(patternCode: string) {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return
 
   window.dataLayer?.push({
-    event: "results_viewed",
+    event: 'results_viewed',
     pattern_code: patternCode,
-  });
+  })
 
-  window.fbq?.("track", "ViewContent", {
-    content_category: "results",
+  window.fbq?.('track', 'ViewContent', {
+    content_category: 'results',
     content_name: patternCode,
-  });
+  })
 }
 
 export function trackBuyBoxViewed(patternCode: string) {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return
 
   window.dataLayer?.push({
-    event: "buybox_viewed",
+    event: 'buybox_viewed',
     pattern_code: patternCode,
-  });
+  })
 }
 
 export function trackAddToCart(patternCode: string, productId: string, price: number) {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return
 
   window.dataLayer?.push({
-    event: "add_to_cart",
+    event: 'add_to_cart',
     pattern_code: patternCode,
     product_id: productId,
     value: price,
-    currency: "USD",
-  });
+    currency: 'USD',
+  })
 
-  window.fbq?.("track", "AddToCart", {
+  window.fbq?.('track', 'AddToCart', {
     content_ids: [productId],
-    content_type: "product",
+    content_type: 'product',
     value: price,
-    currency: "USD",
-  });
+    currency: 'USD',
+  })
 }
 
 export function trackCheckoutInitiated(patternCode: string, productId: string, price: number) {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return
 
   window.dataLayer?.push({
-    event: "checkout_initiated",
+    event: 'checkout_initiated',
     pattern_code: patternCode,
     product_id: productId,
     value: price,
-    currency: "USD",
-  });
+    currency: 'USD',
+  })
 
-  window.fbq?.("track", "InitiateCheckout", {
+  window.fbq?.('track', 'InitiateCheckout', {
     content_ids: [productId],
-    content_type: "product",
+    content_type: 'product',
     value: price,
-    currency: "USD",
-  });
+    currency: 'USD',
+  })
 }
 
-// Mapping from condition codes to pattern codes (for internal use only)
-export const CONDITION_TO_PATTERN: Record<string, string> = {
-  ftd: "P1",
-  nps: "P2",
-  csd: "P3",
-  agn: "P4",
-  tnf: "P5",
-  bsp: "P6",
-  oly: "P7",
-  prn: "P8",
-  itn: "P9",
-  ysn: "P10",
-  rdl: "P11",
-  prf: "P12",
-  gns: "P13",
-};
-
 export function getPatternCode(conditionSlug: string): string {
-  return CONDITION_TO_PATTERN[conditionSlug.toLowerCase()] || "P1";
+  return CONDITION_TO_PATTERN[conditionSlug] || CONDITION_TO_PATTERN[conditionSlug.toUpperCase()] || 'P1'
 }
