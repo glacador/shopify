@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130" fill="none">
+  <rect width="200" height="130" fill="#f5f5f5"/>
+  <ellipse cx="50" cy="55" rx="25" ry="35" fill="#fcd34d" stroke="#d97706" stroke-width="1.5"/>
+  <ellipse cx="100" cy="55" rx="25" ry="35" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/>
+  <ellipse cx="150" cy="55" rx="25" ry="35" fill="#f59e0b" stroke="#d97706" stroke-width="1.5"/>
+  <text x="100" y="110" text-anchor="middle" fill="#666" font-size="10" font-family="sans-serif">Multiple affected</text>
+</svg>

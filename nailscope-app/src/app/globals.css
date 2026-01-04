@@ -111,6 +111,43 @@ button:not(:disabled):active {
   animation: fadeInUp 0.3s ease-out forwards;
 }
 
+/* Smooth scroll behavior for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Stats section stats boxes hover effect */
+.stats-box {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Quiz option hover states */
+.quiz-option {
+  transition: all 0.2s ease;
+}
+
+.quiz-option:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Trust logo grayscale effect */
+.trust-logo {
+  filter: grayscale(100%);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.trust-logo:hover {
+  filter: grayscale(0%);
+  opacity: 1;
+}
+
 /* Details/Summary styling */
 details summary::-webkit-details-marker {
   display: none;
