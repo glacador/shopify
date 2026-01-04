@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd nailscope-app && npm install && npm run build",
+  "outputDirectory": "nailscope-app/.next",
+  "framework": "nextjs",
+  "installCommand": "cd nailscope-app && npm install"
+}
