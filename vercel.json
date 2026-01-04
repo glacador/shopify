@@ -1,6 +1,5 @@
 {
-  "framework": null,
+  "framework": "nextjs",
   "buildCommand": "cd nailscope-app && npm install && npm run build",
-  "outputDirectory": "nailscope-app/.next",
-  "installCommand": "echo 'skipping root install'"
+  "outputDirectory": "nailscope-app/.next"
 }
